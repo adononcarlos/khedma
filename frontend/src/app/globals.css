@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/* Mode sombre piloté par la classe .dark sur <html> (bouton + préférence système) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Palette : violet profond (clin d'œil à l'identité ANAPEC) + safran marocain en accent.
+   Les surfaces et textes passent par des variables pour basculer d'un bloc en mode sombre. */
+@theme {
+  --color-brand-50: #f6f3ff;
+  --color-brand-100: #ede7ff;
+  --color-brand-200: #d9ccff;
+  --color-brand-300: #c4b1ff;
+  --color-brand-500: #7c4dff;
+  --color-brand-600: #6a35f0;
+  --color-brand-700: #5626c7;
+  --color-brand-900: #2a1466;
+  --color-saffron-400: #fbbf24;
+  --color-saffron-500: #f59e0b;
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-chip: var(--chip);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-viz: var(--viz);
+  --color-grid: var(--grid);
+  --font-sans: var(--font-inter), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+  --page: #f8f7fc;
+  --card: #ffffff;
+  --chip: #f1f0f5;
+  --ink: #1c1a29;
+  --ink-soft: #3a3748;
+  --muted: #6b6878;
+  --line: rgb(0 0 0 / 0.08);
+  --accent-soft: #f6f3ff;
+  --accent-ink: #5626c7;
+  --viz: #6a35f0; /* validé : contraste >= 3:1 sur #ffffff */
+  --grid: #ecebf1;
+}
+
+.dark {
+  color-scheme: dark;
+  --page: #0f0d17;
+  --card: #1a1726;
+  --chip: #262236;
+  --ink: #f1eff8;
+  --ink-soft: #d6d2e4;
+  --muted: #9d98b0;
+  --line: rgb(255 255 255 / 0.09);
+  --accent-soft: #231a40;
+  --accent-ink: #c4b1ff;
+  --viz: #9a78ff; /* validé : contraste >= 3:1 sur #1a1726 */
+  --grid: #2a2638;
+}
+
+body {
+  background: var(--page);
+  color: var(--ink);
+}
+
+[dir="rtl"] body {
+  font-family: var(--font-arabic), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}

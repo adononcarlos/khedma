@@ -1,0 +1,21 @@
+# Secrets (clé Firecrawl, etc.)
+.env
+
+# Environnement Python
+.venv/
+__pycache__/
+
+# Cache des recherches Firecrawl
+.firecrawl/
+
+# Artefacts Playwright
+test-results/
+playwright-report/
+
+# Node / Next.js
+node_modules/
+.next/
+
+# Identifiants (compte de service GCP, etc.) : jamais dans git
+secrets/
+*.json.key
