@@ -120,6 +120,13 @@ class GeminiVertexProvider:
         from app.config import ROOT
 
         creds = settings.google_application_credentials
+        if settings.gcp_service_account_json and not creds:
+            # Hébergement : le JSON est fourni dans une variable d'environnement secrète (jamais dans le dépôt)
+            import tempfile
+
+            fd, creds = tempfile.mkstemp(suffix=".json")
+            with os.fdopen(fd, "w") as f:
+                f.write(settings.gcp_service_account_json)
         if creds:
             creds = str((ROOT / creds).resolve()) if not os.path.isabs(creds) else creds
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds
@@ -133,7 +140,8 @@ class GeminiVertexProvider:
         from google.genai import types
 
         cfg = dict(system_instruction=system, response_mime_type="application/json", response_json_schema=schema,
-                   temperature=0.4, max_output_tokens=max_tokens)
+                   temperature=0.4, max_output_tokens=max_tokens,
+                   automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True))
         try:
             config = types.GenerateContentConfig(**cfg, thinking_config=types.ThinkingConfig(thinking_level="low"))
             resp = self.client.models.generate_content(model=self.model, contents=json.dumps(payload, ensure_ascii=False), config=config)
@@ -169,7 +177,9 @@ class GeminiVertexProvider:
             f"Traduis chaque élément de la liste vers la langue « {target} » (fr, ar ou en). Conserve le Markdown "
             "(**gras**, puces « - »), les noms propres, sigles et montants. Même nombre d'éléments, même ordre.",
             {"items": texts}, schema, max(256, sum(len(t) for t in texts) // 2))
-        return (out["t"] if len(out["t"]) == len(texts) else None), usage
+        # Le modèle échappe parfois les retours à la ligne ("\\n" littéral) : on les rétablit
+        items = [t.replace("\\n", "\n") for t in out["t"]]
+        return (items if len(items) == len(texts) else None), usage
 
 
 def get_provider():

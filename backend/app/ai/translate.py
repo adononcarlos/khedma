@@ -27,7 +27,7 @@ def translate_titles(session: Session, offers: list[Offer], lang: str) -> dict[i
         texts, usage = provider.translate_texts([o.title for o in missing], lang)
         if texts:
             for o, t in zip(missing, texts):
-                row = cache.get(o.id) or OfferTranslation(offer_id=o.id, lang=lang, provider=provider.name)
+                row = cache.get(o.id) or OfferTranslation(offer_id=o.id, lang=lang, provider=provider.name, tokens_in=0, tokens_out=0)
                 row.title = t
                 row.tokens_in += usage.tokens_in // len(missing)
                 row.tokens_out += usage.tokens_out // len(missing)
@@ -48,7 +48,7 @@ def translate_offer(session: Session, o: Offer, lang: str) -> OfferTranslation |
     texts, usage = provider.translate_texts(fields, lang)
     if not texts:
         return row  # éventuellement le titre seul, déjà traduit depuis la liste
-    row = row or OfferTranslation(offer_id=o.id, lang=lang, provider=provider.name)
+    row = row or OfferTranslation(offer_id=o.id, lang=lang, provider=provider.name, tokens_in=0, tokens_out=0)
     row.title, row.description, row.education, row.sector = (t or None for t in texts)
     row.tokens_in += usage.tokens_in
     row.tokens_out += usage.tokens_out

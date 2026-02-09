@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     jwt_secret: str = "dev-secret-a-changer"
     # IA (GCP Vertex AI)
     google_application_credentials: str = ""
+    gcp_service_account_json: str = ""  # contenu du JSON (hébergement), prioritaire sur un fichier absent
     gcp_project: str = ""
     gcp_location: str = "eu"
     llm_model: str = "gemini-3.8-flash"
