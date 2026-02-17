@@ -4,7 +4,7 @@ from sqlalchemy import select
 from app.db import SessionLocal
 from app.matching.skills import extract_skills
 from app.models import Offer
-from app.sourcing.markdown import bulletize, structure_plain, tidy
+from app.sourcing.markdown import bulletize, reflow, structure_plain, tidy
 from app.sourcing.taxonomy import experience_level, job_function, sector_group
 
 if __name__ == "__main__":
@@ -16,7 +16,7 @@ if __name__ == "__main__":
             if o.source == "anapec" and o.description:
                 o.description = bulletize(o.description)
             elif o.description:
-                o.description = tidy(o.description)
+                o.description = reflow(tidy(o.description))
             o.job_function = job_function(o.title, o.occupation, o.description)
             o.sector_group = sector_group(o.sector, o.title)
             o.experience_level = experience_level(o.experience, o.description)

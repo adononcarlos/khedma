@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
 from app.matching.skills import extract_skills
-from app.sourcing.markdown import bulletize, structure_plain, tidy
+from app.sourcing.markdown import bulletize, reflow, structure_plain, tidy
 from app.sourcing.taxonomy import experience_level, job_function, sector_group
 from app.models import Offer
 from app.sourcing.connectors.base import Connector, RawOffer
@@ -40,7 +40,7 @@ def _apply(offer: Offer, raw: RawOffer) -> None:
     offer.occupation = extra.get("occupation")
     offer.languages = raw.languages
     # Descriptions ANAPEC en texte à libellés -> Markdown structuré ; les autres sont déjà en Markdown
-    offer.description = bulletize(structure_plain(raw.description)) if raw.source == "anapec" and raw.description else (tidy(raw.description) if raw.description else None)
+    offer.description = bulletize(structure_plain(raw.description)) if raw.source == "anapec" and raw.description else (reflow(tidy(raw.description)) if raw.description else None)
     offer.positions = raw.positions
     offer.posted_at = raw.posted_at
     offer.start_date = raw.start_date
