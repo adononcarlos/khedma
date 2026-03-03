@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import type { Facets } from "@/lib/api";
 
@@ -15,6 +15,7 @@ export function Filters({ facets, t }: { facets: Facets; t: FilterLabels }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
+  const lang = String(useParams().lang ?? "fr");
 
   const set = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -23,13 +24,17 @@ export function Filters({ facets, t }: { facets: Facets; t: FilterLabels }) {
     router.push(`${pathname}?${next}`);
   };
 
-  const select = (key: string, label: string, options: { value: string; label: string; count: number }[]) => (
+  // Ordre alphabétique dans la langue affichée ; « Autres » (valeur "other") toujours en dernier
+  const alpha = (options: { value: string; label: string; count: number }[]) =>
+    [...options].sort((a, b) => (a.value === "other" ? 1 : b.value === "other" ? -1 : a.label.localeCompare(b.label, lang)));
+
+  const select = (key: string, label: string, options: { value: string; label: string; count: number }[], sorted = true) => (
     <label className="block">
       <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">{label}</span>
       <select value={params.get(key) ?? ""} onChange={(e) => set(key, e.target.value)}
         className="w-full rounded-xl border border-line bg-card px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
         <option value="">{t.all}</option>
-        {options.map((o) => <option key={o.value} value={o.value}>{o.label} ({o.count})</option>)}
+        {(sorted ? alpha(options) : options).map((o) => <option key={o.value} value={o.value}>{o.label} ({o.count})</option>)}
       </select>
     </label>
   );
@@ -42,7 +47,7 @@ export function Filters({ facets, t }: { facets: Facets; t: FilterLabels }) {
       </form>
       {select("function", t.function, facets.functions.map((f) => ({ value: f.value, label: t.functions[f.value] ?? f.value, count: f.count })))}
       {select("sector_group", t.sector, facets.sector_groups.map((f) => ({ value: f.value, label: t.sectors[f.value] ?? f.value, count: f.count })))}
-      {select("experience", t.experience, ["entry", "1-2", "3-5", "5-10", "10+"].map((v) => ({ value: v, label: t.experiences[v], count: facets.experiences.find((f) => f.value === v)?.count ?? 0 })).filter((o) => o.count > 0))}
+      {select("experience", t.experience, ["entry", "1-2", "3-5", "5-10", "10+"].map((v) => ({ value: v, label: t.experiences[v], count: facets.experiences.find((f) => f.value === v)?.count ?? 0 })).filter((o) => o.count > 0), false)}
       <label className="block">
         <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">{t.since}</span>
         <select value={params.get("since") ?? ""} onChange={(e) => set("since", e.target.value)}
