@@ -21,6 +21,19 @@ export default async function OffersPage({ params, searchParams }: PageProps<"/[
     searchOffers({ ...filters, lang, page: String(page), size: String(SIZE) }),
     getFacets(),
   ]);
+  // Tri alphabétique des options, fait une seule fois côté serveur ; « Autres » en dernier
+  const collator = new Intl.Collator(lang);
+  const byLabel = (list: typeof facets.functions, labels: Record<string, string>) =>
+    [...list].sort((a, b) => (a.value === "other" ? 1 : b.value === "other" ? -1
+      : collator.compare(labels[a.value] ?? a.name ?? a.value, labels[b.value] ?? b.name ?? b.value)));
+  const sortedFacets = {
+    ...facets,
+    functions: byLabel(facets.functions, t.functions),
+    sector_groups: byLabel(facets.sector_groups, t.sectors),
+    regions: byLabel(facets.regions, t.regions),
+    contracts: byLabel(facets.contracts, t.contracts),
+    sources: byLabel(facets.sources, {}),
+  };
   const pages = Math.ceil(res.total / SIZE);
   const link = (p: number) => {
     const qs = new URLSearchParams(Object.entries({ ...filters, page: String(p) }).filter(([, v]) => v) as [string, string][]);
@@ -31,7 +44,7 @@ export default async function OffersPage({ params, searchParams }: PageProps<"/[
     <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 md:grid-cols-[260px_1fr]">
       <aside className="min-w-0 md:sticky md:top-24 md:self-start">
         <h2 className="mb-4 text-sm font-bold text-ink">{t.offers.filters}</h2>
-        <Filters facets={facets} t={{
+        <Filters facets={sortedFacets} t={{
           all: t.offers.all, reset: t.offers.reset, region: t.offers.region, contract: t.offers.contract,
           source: t.offers.source, searchPlaceholder: t.home.searchPlaceholder, contracts: t.contracts, regions: t.regions,
           function: t.facets.function, sector: t.facets.sector, experience: t.facets.experience, since: t.facets.since,

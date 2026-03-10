@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Noto_Sans_Arabic } from "next/font/google";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 
 import { Header } from "@/components/Header";
 import { dirOf, getDictionary, hasLocale, locales } from "@/i18n/dictionaries";
@@ -27,11 +28,9 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
   return (
     <html lang={lang} dir={dirOf(lang)} suppressHydrationWarning
       className={`${inter.variable} ${arabic.variable} h-full antialiased`}>
-      <head>
-        {/* Applique le thème avant l'affichage (évite le flash clair en mode sombre) */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
-      </head>
       <body className="min-h-full flex flex-col">
+        {/* Applique le thème avant l'affichage (évite le flash clair en mode sombre) */}
+        <Script id="theme" strategy="beforeInteractive">{THEME_SCRIPT}</Script>
         <Header lang={lang} t={t} />
         <main className="flex-1">{children}</main>
       </body>
