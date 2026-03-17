@@ -1,7 +1,17 @@
 @import "tailwindcss";
 
-/* Mode sombre piloté par la classe .dark sur <html> (bouton + préférence système) */
-@custom-variant dark (&:where(.dark, .dark *));
+/* Mode sombre : choix explicite (classe .dark / .light posée par le serveur depuis un cookie),
+   sinon préférence du système. Aucun script nécessaire. */
+@custom-variant dark {
+  &:where(.dark, .dark *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not(.light), :root:not(.light) *) {
+      @slot;
+    }
+  }
+}
 
 /* Palette : violet profond (clin d'œil à l'identité ANAPEC) + safran marocain en accent.
    Les surfaces et textes passent par des variables pour basculer d'un bloc en mode sombre. */
@@ -58,6 +68,23 @@
   --accent-ink: #c4b1ff;
   --viz: #9a78ff; /* validé : contraste >= 3:1 sur #1a1726 */
   --grid: #2a2638;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+    --page: #0f0d17;
+    --card: #1a1726;
+    --chip: #262236;
+    --ink: #f1eff8;
+    --ink-soft: #d6d2e4;
+    --muted: #9d98b0;
+    --line: rgb(255 255 255 / 0.09);
+    --accent-soft: #231a40;
+    --accent-ink: #c4b1ff;
+    --viz: #9a78ff; /* validé : contraste >= 3:1 sur #1a1726 */
+    --grid: #2a2638;
+  }
 }
 
 body {

@@ -9,7 +9,7 @@ import type { OfferCard } from "@/lib/api";
 import { authFetch, getMe } from "@/lib/session";
 
 type MatchItem = { offer: OfferCard; score: number; matched: string[]; missing: string[] };
-type Gap = { skill: string; label: string; share: number; provider: string; url: string };
+type Gap = { skill: string; label: string; share: number; provider: string; kind: string; url: string };
 
 const STATUS_TONE: Record<string, string> = {
   eligible: "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 ring-emerald-200",
@@ -20,14 +20,14 @@ const STATUS_TONE: Record<string, string> = {
 export default async function SpacePage({ params, searchParams }: PageProps<"/[lang]/espace">) {
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
-  const me = await getMe();
+  const me = await getMe(lang);
   if (!me) redirect(`/${lang}/connexion`);
   const t = getDictionary(lang);
   const s = t.space;
   const justUploaded = (await searchParams).cv === "ok";
   const p = me.profile;
   const matches: { items: MatchItem[]; skill_gaps: Gap[] } | null =
-    p ? await authFetch("/api/me/matches?limit=12").then((r) => (r.ok ? r.json() : null)) : null;
+    p ? await authFetch(`/api/me/matches?limit=12&lang=${lang}`).then((r) => (r.ok ? r.json() : null)) : null;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -64,7 +64,7 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/[l
               {me.eligibility.map((e) => (
                 <li key={e.program} className="text-sm">
                   <span className={`me-2 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${STATUS_TONE[e.status] ?? ""}`}>{e.program}</span>
-                  <span className="text-ink-soft">{e.text}</span>
+                  <span className="text-ink-soft">{t.elig[e.code] ?? e.text}</span>
                 </li>
               ))}
             </ul>
@@ -78,7 +78,7 @@ export default async function SpacePage({ params, searchParams }: PageProps<"/[l
                   <li key={g.skill} className="text-sm">
                     <p className="text-ink">{s.gapLine(g.label, g.share)}</p>
                     <a href={g.url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-accent-ink hover:underline">
-                      {s.train} : {g.provider} ↗</a>
+                      {s.train} : {t.training[g.kind] ?? g.provider} ↗</a>
                   </li>
                 ))}
               </ul>

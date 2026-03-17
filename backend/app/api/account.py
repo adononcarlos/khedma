@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
@@ -67,10 +67,13 @@ def login(body: LoginIn, session: Session = Depends(get_session)):
     return {"token": create_token(u), "user": _user_out(u)}
 
 
+LANG = Query(None, pattern="^(fr|ar|en)$")
+
+
 @router.get("/me")
-def me(u: User = Depends(current_user), session: Session = Depends(get_session)):
+def me(lang: str | None = LANG, u: User = Depends(current_user), session: Session = Depends(get_session)):
     p = session.get(Profile, u.id)
-    return {"user": _user_out(u), "profile": _profile_out(p, u.preferred_language),
+    return {"user": _user_out(u), "profile": _profile_out(p, lang or u.preferred_language),
             "eligibility": profile_eligibility(u, p)}
 
 
@@ -112,13 +115,13 @@ async def upload_cv(file: UploadFile = File(...), u: User = Depends(current_user
 
 
 @router.get("/me/matches")
-def my_matches(region: str | None = None, contract: str | None = None, limit: int = 20,
+def my_matches(region: str | None = None, contract: str | None = None, limit: int = 20, lang: str | None = LANG,
                u: User = Depends(current_user), session: Session = Depends(get_session)):
     p = session.get(Profile, u.id)
     if p is None:
         raise HTTPException(409, "Déposez d'abord votre CV")
     matches = match_offers(session, u, p, limit=max(limit, 30), region=region, contract=contract)
-    lang = u.preferred_language
+    lang = lang or u.preferred_language
     return {
         "items": [{"offer": _card(m.offer).model_dump(), "score": m.score,
                    "matched": [label(s, lang) for s in m.matched_skills],
@@ -141,9 +144,10 @@ def _match_for(session: Session, u: User, offer_id: int):
 
 
 @router.get("/me/offers/{offer_id}/match")
-def offer_match(offer_id: int, u: User = Depends(current_user), session: Session = Depends(get_session)):
+def offer_match(offer_id: int, lang: str | None = LANG, u: User = Depends(current_user),
+                session: Session = Depends(get_session)):
     _, _, m = _match_for(session, u, offer_id)
-    lang = u.preferred_language
+    lang = lang or u.preferred_language
     return {"score": m.score, "matched": [label(s, lang) for s in m.matched_skills],
             "missing": [label(s, lang) for s in m.missing_skills]}
 

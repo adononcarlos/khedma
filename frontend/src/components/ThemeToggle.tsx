@@ -1,9 +1,15 @@
 "use client";
 
+// Bascule clair / sombre : classe sur <html> + cookie lu par le serveur au prochain rendu (pas de flash).
 export function ThemeToggle({ label }: { label: string }) {
   const toggle = () => {
-    const dark = document.documentElement.classList.toggle("dark");
-    try { localStorage.setItem("theme", dark ? "dark" : "light"); } catch {}
+    const root = document.documentElement;
+    const isDark = root.classList.contains("dark")
+      || (!root.classList.contains("light") && matchMedia("(prefers-color-scheme: dark)").matches);
+    const next = isDark ? "light" : "dark";
+    root.classList.remove("dark", "light");
+    root.classList.add(next);
+    document.cookie = `theme=${next}; path=/; max-age=31536000; samesite=lax`;
   };
   return (
     <button onClick={toggle} aria-label={label} title={label}

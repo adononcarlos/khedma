@@ -30,7 +30,7 @@ export type OfferDetail = OfferCard & {
   languages: Record<string, string> | null;
   start_date: string | null;
   contract_raw: string | null;
-  eligibility: { program: string; tone: string; text: string }[];
+  eligibility: { program: string; code: string; tone: string; text: string }[];
   translated: boolean;
 };
 

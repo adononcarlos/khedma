@@ -26,7 +26,7 @@ export function Tag({ children, tone = "zinc" }: { children: React.ReactNode; to
 export function OfferCard({ o, lang, t }: { o: Offer; lang: Locale; t: Dict }) {
   return (
     <Link href={`/${lang}/offres/${o.id}`}
-      className="group block rounded-2xl border border-line bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md">
+      className="group block min-w-0 rounded-2xl border border-line bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate font-semibold text-ink group-hover:text-accent-ink" dir="auto">{o.title}</h3>

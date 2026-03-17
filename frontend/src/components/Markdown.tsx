@@ -8,7 +8,8 @@ function inline(text: string): ReactNode[] {
       : <Fragment key={i}>{part}</Fragment>);
 }
 
-export function Markdown({ text, lang }: { text: string; lang?: string }) {
+// headings : traduction des titres de sections ajoutés par nos connecteurs (« Entreprise », « Missions »…), sans token
+export function Markdown({ text, lang, headings = {} }: { text: string; lang?: string; headings?: Record<string, string> }) {
   const blocks: ReactNode[] = [];
   let list: string[] = [];
   const flush = () => {
@@ -24,7 +25,10 @@ export function Markdown({ text, lang }: { text: string; lang?: string }) {
     if (!line) continue;
     const heading = /^\*\*[^*]+\*\*\s*:?$/.test(line);
     blocks.push(heading
-      ? <h3 key={blocks.length} className="mt-5 font-semibold text-ink first:mt-0">{line.replace(/\*\*/g, "")}</h3>
+      ? <h3 key={blocks.length} className="mt-5 font-semibold text-ink first:mt-0">{(() => {
+          const title = line.replace(/\*\*/g, "").replace(/\s*:$/, "").trim();
+          return headings[title] ? `${headings[title]} :` : line.replace(/\*\*/g, "");
+        })()}</h3>
       : <p key={blocks.length} className="my-2">{inline(line)}</p>);
   }
   flush();

@@ -23,9 +23,12 @@ LANGS = {"francais", "anglais", "arabe", "espagnol", "allemand"}
 SOFT = {"equipe", "communication", "organisation", "autonomie"}
 
 
+def training_kind(skill: str) -> str:
+    return "digital" if skill in DIGITAL else "langues" if skill in LANGS else "soft" if skill in SOFT else "metier"
+
+
 def training_for(skill: str) -> tuple[str, str]:
-    kind = "digital" if skill in DIGITAL else "langues" if skill in LANGS else "soft" if skill in SOFT else "metier"
-    return TRAINING_PROVIDERS[kind]
+    return TRAINING_PROVIDERS[training_kind(skill)]
 
 
 def skill_gaps(missing_by_offer: list[list[str]], lang: str = "fr", top: int = 5) -> list[dict]:
@@ -39,18 +42,19 @@ def skill_gaps(missing_by_offer: list[list[str]], lang: str = "fr", top: int = 5
     out = []
     for s, c in ranked:
         provider, url = training_for(s)
-        out.append({"skill": s, "label": label(s, lang), "share": round(100 * c / n), "provider": provider, "url": url})
+        out.append({"skill": s, "label": label(s, lang), "share": round(100 * c / n), "provider": provider,
+                    "kind": training_kind(s), "url": url})
     return out
 
 
 def offer_eligibility(o: Offer) -> list[dict]:
     badges = []
     if o.contract_type == "IDMAJ":
-        badges.append({"program": "IDMAJ", "tone": "brand",
+        badges.append({"program": "IDMAJ", "code": "idmaj_offer", "tone": "brand",
                        "text": "Contrat de formation-insertion (loi 51.25) : 12 mois max, indemnité 1 600–6 000 DH, "
                                "ouvert aux diplômés et non-diplômés inscrits à l’ANAPEC."})
     if o.contract_type == "CDI":
-        badges.append({"program": "TAHFIZ", "tone": "green",
+        badges.append({"program": "TAHFIZ", "code": "tahfiz_offer", "tone": "green",
                        "text": "Si l’employeur a moins de 2 ans : exonérations TAHFIZ possibles (jusqu’à 10 CDI, 24 mois)."})
     return badges
 
@@ -59,11 +63,11 @@ def profile_eligibility(u: User, p: Profile | None) -> list[dict]:
     out = []
     level = (p.education_level if p else None) or "none"
     if not u.anapec_registered:
-        out.append({"program": "ANAPEC", "status": "action",
+        out.append({"program": "ANAPEC", "code": "anapec_register", "status": "action",
                     "text": "Inscrivez-vous à l’ANAPEC : c’est la condition pour bénéficier des contrats IDMAJ."})
-    out.append({"program": "IDMAJ", "status": "eligible" if u.anapec_registered else "possible",
+    out.append({"program": "IDMAJ", "code": "idmaj_profile", "status": "eligible" if u.anapec_registered else "possible",
                 "text": "Contrat de formation-insertion de 12 mois, y compris sans diplôme depuis la loi 51.25."})
     if level == "none":
-        out.append({"program": "TADAROJ", "status": "eligible",
+        out.append({"program": "TADAROJ", "code": "tadaroj", "status": "eligible",
                     "text": "Formation par apprentissage (200+ métiers) avec bourse de 5 000 DH/an."})
     return out

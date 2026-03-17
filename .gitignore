@@ -19,3 +19,6 @@ node_modules/
 # Identifiants (compte de service GCP, etc.) : jamais dans git
 secrets/
 *.json.key
+
+# Captures, vidéos et fichiers générés par les tests e2e
+e2e/artefacts/

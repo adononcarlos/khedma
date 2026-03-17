@@ -31,7 +31,7 @@ export function CaseloadRow({ item, lang, t }: { item: Item; lang: string; t: L 
       <p className="mt-1 text-sm text-muted">{[item.headline, item.city].filter(Boolean).join(" · ")}</p>
       {item.reasons && <p className="mt-1 text-xs text-muted">{item.reasons.join(", ")}</p>}
       {item.has_cv && !sugg && (
-        <button disabled={pending} onClick={() => start(async () => setSugg(await counselorSuggestions(item.id)))}
+        <button disabled={pending} onClick={() => start(async () => setSugg(await counselorSuggestions(item.id, lang)))}
           className="mt-3 rounded-lg border border-brand-600 px-3 py-1.5 text-xs font-semibold text-accent-ink hover:bg-accent-soft disabled:opacity-60">
           {pending ? "…" : t.suggest}
         </button>

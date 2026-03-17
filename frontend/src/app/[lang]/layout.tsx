@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Noto_Sans_Arabic } from "next/font/google";
 import { notFound } from "next/navigation";
-import Script from "next/script";
+import { cookies } from "next/headers";
 
 import { Header } from "@/components/Header";
 import { dirOf, getDictionary, hasLocale, locales } from "@/i18n/dictionaries";
@@ -15,8 +15,6 @@ export const metadata: Metadata = {
   description: "Agrégation des offres d'emploi marocaines et matching IA des profils.",
 };
 
-const THEME_SCRIPT = `try{var t=localStorage.getItem("theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}`;
-
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
 }
@@ -25,12 +23,13 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
   const t = getDictionary(lang);
+  // Thème choisi par l'utilisateur (cookie) ; sans choix, le CSS suit la préférence du système
+  const theme = (await cookies()).get("theme")?.value;
+  const themeClass = theme === "dark" ? "dark" : theme === "light" ? "light" : "";
   return (
     <html lang={lang} dir={dirOf(lang)} suppressHydrationWarning
-      className={`${inter.variable} ${arabic.variable} h-full antialiased`}>
+      className={`${inter.variable} ${arabic.variable} h-full antialiased ${themeClass}`}>
       <body className="min-h-full flex flex-col">
-        {/* Applique le thème avant l'affichage (évite le flash clair en mode sombre) */}
-        <Script id="theme" strategy="beforeInteractive">{THEME_SCRIPT}</Script>
         <Header lang={lang} t={t} />
         <main className="flex-1">{children}</main>
       </body>

@@ -75,7 +75,7 @@ export async function markApplied(offerId: number) {
   await authFetch(`/api/me/offers/${offerId}/applied`, { method: "POST" });
 }
 
-export async function counselorSuggestions(userId: number) {
-  const r = await authFetch(`/api/counselor/seekers/${userId}/suggestions`);
+export async function counselorSuggestions(userId: number, lang = "fr") {
+  const r = await authFetch(`/api/counselor/seekers/${userId}/suggestions?lang=${lang}`);
   return r.ok ? (await r.json()).items : [];
 }

@@ -16,7 +16,7 @@ export default async function OfferPage({ params }: PageProps<"/[lang]/offres/[i
   if (!o) notFound();
   const loggedIn = Boolean(await getToken());
   const match: { score: number; matched: string[]; missing: string[] } | null = loggedIn
-    ? await authFetch(`/api/me/offers/${o.id}/match`).then((r) => (r.ok ? r.json() : null)) : null;
+    ? await authFetch(`/api/me/offers/${o.id}/match?lang=${lang}`).then((r) => (r.ok ? r.json() : null)) : null;
 
   // Infos clés affichées directement sous le titre (seulement celles qui existent)
   const facts = [
@@ -59,7 +59,7 @@ export default async function OfferPage({ params }: PageProps<"/[lang]/offres/[i
             <section className="mt-8">
               <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{t.offer.description}</h2>
               {o.translated && <p className="mt-2 text-xs italic text-muted">{t.facets.translated}</p>}
-              <div className="mt-3"><Markdown text={o.description} lang={o.translated ? lang : o.language} /></div>
+              <div className="mt-3"><Markdown text={o.description} lang={o.translated ? lang : o.language} headings={t.mdHeadings} /></div>
             </section>
           )}
         </article>
@@ -83,7 +83,7 @@ export default async function OfferPage({ params }: PageProps<"/[lang]/offres/[i
             <div className="space-y-2 rounded-2xl border border-line bg-card p-5 text-sm shadow-sm">
               {o.eligibility.map((e) => (
                 <p key={e.program}><span className="me-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent-ink">{e.program}</span>
-                  <span className="text-ink-soft">{e.text}</span></p>
+                  <span className="text-ink-soft">{t.elig[e.code] ?? e.text}</span></p>
               ))}
             </div>
           )}

@@ -29,11 +29,11 @@ export type Me = {
     languages: { name: string; level: string | null }[] | null; education_level: string | null;
     years_experience: number | null; cv_filename: string | null; cv_language: string | null;
   };
-  eligibility: { program: string; status: string; text: string }[];
+  eligibility: { program: string; code: string; status: string; text: string }[];
 };
 
-export async function getMe(): Promise<Me | null> {
+export async function getMe(lang?: string): Promise<Me | null> {
   if (!(await getToken())) return null;
-  const r = await authFetch("/api/me");
+  const r = await authFetch(`/api/me${lang ? `?lang=${lang}` : ""}`);
   return r.ok ? r.json() : null;
 }

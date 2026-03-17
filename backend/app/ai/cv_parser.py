@@ -28,13 +28,34 @@ def extract_text(filename: str, data: bytes) -> str:
     if name.endswith(".pdf"):
         from pypdf import PdfReader
 
-        return "\n".join((p.extract_text() or "") for p in PdfReader(io.BytesIO(data)).pages)
+        return _fix_rtl("\n".join((p.extract_text() or "") for p in PdfReader(io.BytesIO(data)).pages))
     if name.endswith(".docx"):
         from docx import Document
 
         doc = Document(io.BytesIO(data))
         return "\n".join(p.text for p in doc.paragraphs)
     return data.decode("utf-8", errors="replace")
+
+
+def _fix_rtl(text: str) -> str:
+    """Texte arabe extrait d'un PDF : formes de présentation -> lettres de base (NFKC), et lignes
+    à dominante arabe remises dans l'ordre de lecture (pypdf les rend dans l'ordre visuel, inversé)."""
+    import unicodedata
+
+    out = []
+    for line in unicodedata.normalize("NFKC", text).splitlines():
+        arabic = sum(1 for c in line if "\u0600" <= c <= "\u06ff")
+        letters = sum(1 for c in line if c.isalpha()) or 1
+        if arabic / letters <= 0.6:
+            out.append(line)
+            continue
+        words = list(reversed(line.split()))
+        # Ponctuation restée du mauvais côté dans l'ordre visuel : « .المدن » -> « المدن. », « نقل- » -> « - نقل »
+        words = [w[1:] + w[0] if len(w) > 1 and w[0] in ".,;:!?،؛" else w for w in words]
+        if words and len(words[0]) > 1 and words[0][-1] in "-•":
+            words = ["-", words[0][:-1], *words[1:]]
+        out.append(" ".join(words))
+    return "\n".join(out)
 
 
 def _heading(line: str) -> str | None:

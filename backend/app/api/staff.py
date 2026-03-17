@@ -54,7 +54,8 @@ def caseload(me: User = Depends(require_role("counselor", "admin")), session: Se
 
 
 @router.get("/counselor/seekers/{user_id}/suggestions")
-def suggestions(user_id: int, me: User = Depends(require_role("counselor", "admin")), session: Session = Depends(get_session)):
+def suggestions(user_id: int, lang: str = "fr", me: User = Depends(require_role("counselor", "admin")),
+                session: Session = Depends(get_session)):
     u = session.get(User, user_id)
     if u is None or u.role != "seeker" or (me.role == "counselor" and u.counselor_id != me.id):
         raise HTTPException(404, "Candidat introuvable dans votre portefeuille")
@@ -62,7 +63,7 @@ def suggestions(user_id: int, me: User = Depends(require_role("counselor", "admi
     if p is None:
         return {"items": [], "reason": "no_cv"}
     return {"items": [{"offer": _card(m.offer).model_dump(), "score": m.score,
-                       "matched": [label(s) for s in m.matched_skills], "missing": [label(s) for s in m.missing_skills]}
+                       "matched": [label(s, lang) for s in m.matched_skills], "missing": [label(s, lang) for s in m.missing_skills]}
                       for m in match_offers(session, u, p, limit=5)]}
 
 
