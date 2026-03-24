@@ -6,7 +6,8 @@ pas d'image, pas de colonnes, dates homogènes, mots-clés de l'offre présents 
 import html
 import re
 
-from app.ai.provider import Usage, WritingBrief, get_provider
+from app.ai.guard import clean_field, suspicious_output
+from app.ai.provider import MockProvider, Usage, WritingBrief, get_provider
 from app.matching.engine import Match
 from app.matching.skills import SKILLS, label
 from app.models import Offer, Profile, User
@@ -35,7 +36,7 @@ def _relevance(exp: dict, offer_skills: set[str]) -> int:
 def build_brief(u: User, p: Profile, o: Offer, m: Match) -> WritingBrief:
     lang = o.language
     exps = sorted(p.experiences or [], key=lambda e: -_relevance(e, set(o.skills or [])))
-    return WritingBrief(
+    brief = WritingBrief(
         lang=lang,
         candidate_first_name=(u.full_name or "").split(" ")[0] or None,
         candidate_headline=p.headline,
@@ -46,12 +47,20 @@ def build_brief(u: User, p: Profile, o: Offer, m: Match) -> WritingBrief:
         offer_title=o.title, offer_company=o.company, offer_city=o.city,
         offer_key_points=_key_points(o.description),
     )
+    # Chaque champ est nettoyé et borné : le LLM ne reçoit jamais le CV ni l'annonce bruts
+    return WritingBrief(**{k: clean_field(v) for k, v in brief.__dict__.items()})
+
+
+def _allowed(u: User, o: Offer) -> str:
+    return " ".join(filter(None, [u.email, u.phone, o.url, o.company, o.description]))
 
 
 def tailor_cv(u: User, p: Profile, o: Offer, m: Match) -> tuple[dict, Usage]:
     lang = o.language
     brief = build_brief(u, p, o, m)
     summary, usage = get_provider().summary(brief)
+    if suspicious_output(summary, _allowed(u, o)):  # sortie douteuse : gabarit déterministe à la place
+        summary, _ = MockProvider().summary(brief)
     offer_skills = set(o.skills or [])
     ordered = sorted(p.skills or [], key=lambda s: (s not in offer_skills, s))
     exps = sorted(p.experiences or [], key=lambda e: (-_relevance(e, offer_skills), -(int(e.get("start") or 0))))
@@ -77,8 +86,8 @@ def tailor_cv(u: User, p: Profile, o: Offer, m: Match) -> tuple[dict, Usage]:
 def _translate_cv_parts(exps: list[dict], education: list[dict], lang: str) -> tuple[list[dict], list[dict], Usage]:
     """Un seul appel groupé pour tous les intitulés et puces (sans LLM : contenu d'origine conservé)."""
     texts = [x for e in exps for x in [e.get("title") or "", *e.get("bullets", [])]] + [e.get("degree") or "" for e in education]
-    out, usage = get_provider().translate_texts(texts, lang)
-    if not out:
+    out, usage = get_provider().translate_texts(clean_field(texts, 600), lang)
+    if not out or any(suspicious_output(t) for t in out):
         return exps, education, usage
     it = iter(out)
     exps = [{**e, "title": next(it), "bullets": [next(it) for _ in e.get("bullets", [])]} for e in exps]
@@ -87,7 +96,11 @@ def _translate_cv_parts(exps: list[dict], education: list[dict], lang: str) -> t
 
 
 def write_letter(u: User, p: Profile, o: Offer, m: Match) -> tuple[dict, Usage]:
-    content, usage = get_provider().letter(build_brief(u, p, o, m))
+    brief = build_brief(u, p, o, m)
+    content, usage = get_provider().letter(brief)
+    if suspicious_output(" ".join([content.get("salutation", ""), *content.get("paragraphs", []), content.get("closing", "")]),
+                         _allowed(u, o)):
+        content, _ = MockProvider().letter(brief)
     return {"lang": o.language, "name": u.full_name, "contact": " · ".join(filter(None, [u.email, u.phone, u.city])),
             "offer_title": o.title, "offer_company": o.company, **content}, usage
 

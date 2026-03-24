@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.ai import documents
 from app.ai.cv_parser import extract_text, structure_cv
+from app.ai.guard import normalize, scan
 from app.ai.provider import get_provider
 from app.api.offers import _card
 from app.auth import create_token, current_user, hash_password, verify_password
@@ -16,6 +17,9 @@ from app.matching.skills import label
 from app.models import Application, GeneratedDocument, Offer, Profile, User
 from app.sourcing.normalize import city_to_region
 
+import logging
+
+log = logging.getLogger("khedma.account")
 router = APIRouter(prefix="/api", tags=["compte"])
 MAX_CV_BYTES = 5 * 1024 * 1024
 
@@ -97,6 +101,12 @@ async def upload_cv(file: UploadFile = File(...), u: User = Depends(current_user
     if not file.filename.lower().endswith((".pdf", ".docx", ".txt")):
         raise HTTPException(415, "Formats acceptés : PDF, DOCX, TXT")
     text = extract_text(file.filename, data)
+    hits = scan(text)
+    if hits:  # injection de prompt : le CV est refusé, rien n'est enregistré ni envoyé au LLM
+        log.warning("CV refusé (injection de prompt) pour l'utilisateur %s : %s", u.id, hits[:3])
+        raise HTTPException(422, "Ce CV contient des instructions destinées à une intelligence artificielle "
+                                 "(texte visible ou caché). Il a été refusé : déposez un CV sans ce contenu.")
+    text = normalize(text)
     if len(text.strip()) < 80:
         raise HTTPException(422, "Impossible de lire le texte du CV (PDF scanné ?)")
     s = structure_cv(text)

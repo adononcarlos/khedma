@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.ai.guard import clean_field, suspicious_output
 from app.ai.provider import get_provider
 from app.models import Offer, OfferTranslation
 
@@ -43,8 +44,8 @@ def _translate_titles(session: Session, offers: list[Offer], lang: str) -> dict[
     missing = [o for o in todo if o.id not in cache or not cache[o.id].title]
     if missing:
         provider = get_provider()
-        texts, usage = provider.translate_texts([o.title for o in missing], lang)
-        if texts:
+        texts, usage = provider.translate_texts(clean_field([o.title for o in missing], 200), lang)
+        if texts and not any(suspicious_output(t) for t in texts):
             for o, t in zip(missing, texts):
                 row = cache.get(o.id) or OfferTranslation(offer_id=o.id, lang=lang, provider=provider.name, tokens_in=0, tokens_out=0)
                 row.title = t
@@ -75,9 +76,9 @@ def _translate_offer(session: Session, o: Offer, lang: str) -> OfferTranslation 
     if row and row.description is not None:
         return row
     provider = get_provider()
-    fields = [o.title, o.description or "", o.education or "", o.sector or ""]
+    fields = clean_field([o.title, o.description or "", o.education or "", o.sector or ""], 8000)
     texts, usage = provider.translate_texts(fields, lang)
-    if not texts:
+    if not texts or any(suspicious_output(t, o.description or "") for t in texts):
         return row  # éventuellement le titre seul, déjà traduit depuis la liste
     row = row or OfferTranslation(offer_id=o.id, lang=lang, provider=provider.name, tokens_in=0, tokens_out=0)
     row.title, row.description, row.education, row.sector = (t or None for t in texts)

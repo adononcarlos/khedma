@@ -122,3 +122,25 @@ def test_generate_requires_login_and_cv(page, console_errors, api, new_user):
     page.get_by_role("button", name="Générer mon CV + lettre").click()
     expect(page.get_by_role("link", name="Déposez d'abord votre CV")).to_be_visible()
     assert api.post(f"/me/offers/{offer_id}/documents", headers=headers).status_code == 409
+
+
+def test_prompt_injection_cvs_blocked_in_ui(page, console_errors, new_user, cvs):
+    """Chaque CV piégé est refusé avec un message clair ; aucun profil n'est créé."""
+    creds, _ = new_user()
+    ui_login(page, creds["email"], creds["password"])
+    for bad in (b for b in cvs["invalid"] if b.get("injection")):
+        page.goto("/fr/espace", wait_until="networkidle")
+        page.set_input_files("input[name=cv]", bad["path"])
+        page.get_by_role("button", name="Analyser mon CV").click()
+        expect(page.get_by_text("instructions destinées à une intelligence artificielle")).to_be_visible()
+        shot(page, f"cv_refuse_{bad['slug']}", full_page=False)
+    expect(page.get_by_role("heading", name="Déposez votre CV de base")).to_be_visible()  # toujours aucun profil
+
+
+def test_legitimate_ai_engineer_cv_accepted(api, new_user, cvs):
+    """Un CV qui parle légitimement de prompts, de LLM et d'injection n'est PAS bloqué."""
+    ben = cvs["benign_ai"]
+    _, headers = new_user()
+    r = api.post("/me/cv", headers=headers, files={"file": (Path(ben["path"]).name, Path(ben["path"]).read_bytes())})
+    assert r.status_code == 200, r.text
+    assert {s["id"] for s in r.json()["profile"]["skills"]} & set(ben["expect_skills"])

@@ -42,6 +42,12 @@ Le projet a été construit comme démonstrateur pour le service public de l'emp
 
 Le modèle de langue ne sert qu'à ce qui demande vraiment de la rédaction : l'accroche du CV, la lettre et les traductions. La sélection et l'ordre des expériences, la mise en page du CV et la traduction des catégories (métiers, secteurs, régions, contrats) se font sans lui. Mesuré sur une candidature réelle : environ 580 tokens en entrée et 120 en sortie pour le CV, 460 et 200 pour la lettre. Une deuxième génération pour la même offre sort du cache.
 
+## Sécurité
+
+- **Injection de prompt.** Un CV peut contenir des instructions destinées au modèle (« ignore les instructions précédentes… »), visibles ou cachées : texte blanc sur blanc, caractères invisibles, lettres Unicode déguisées. Le texte extrait est normalisé puis analysé en français, anglais et arabe ; un CV piégé est refusé avant tout traitement. Le modèle ne reçoit jamais le CV brut mais des champs courts et nettoyés, présentés comme des données non fiables, et chaque réponse contenant un lien, un email inconnu ou une trace d'injection est remplacée par une version déterministe. Les annonces collectées passent par les mêmes contrôles avant traduction.
+- **Comptes et documents.** Mots de passe hachés (scrypt), jeton de session en cookie `httpOnly`, rôles candidat / conseiller / administration vérifiés côté API ; un conseiller ne voit que les candidats de sa région, un candidat que ses propres documents.
+- **Secrets.** Clés et identifiants hors du dépôt (`.env`, `secrets/`), fournis en variables d'environnement à l'hébergement.
+
 ## Données
 
 Les offres sont réelles et renvoient toujours vers l'annonce d'origine. Les sources respectent leur `robots.txt` et sont interrogées à un rythme limité. LinkedIn et MarocAnnonces en sont exclus : leur `robots.txt` l'interdit. Indeed est interrogé via Firecrawl ; ses conditions d'utilisation limitent la collecte automatique, son usage se limite donc à cette démonstration.
@@ -80,6 +86,16 @@ Comptes de démonstration, mot de passe `demo12345` :
 - conseiller (Casablanca-Settat) : `conseiller6@demo.khedma.ma`
 - administration : `admin@demo.khedma.ma`
 
+## Tests
+
+Suite de bout en bout Playwright (`e2e/`) : pages en trois langues et deux thèmes, mobile, chaque valeur de filtre dans l'interface, toutes les combinaisons de deux filtres via l'API, recherche, comptes, faux CV en PDF, DOCX et TXT (dont des CV piégés), génération des documents, espaces conseiller et administration, contrôle d'accès.
+
+```bash
+.venv/bin/pytest backend                              # tests unitaires
+.venv/bin/pytest e2e -m "not tour"                    # bout en bout
+.venv/bin/pytest e2e -m tour --headed --slowmo 400    # parcours guidé visible
+```
+
 ## Organisation du code
 
 ```
@@ -90,11 +106,5 @@ backend/app/api/        routes : offres, compte candidat, conseiller et observat
 backend/scripts/        ingestion, vectorisation, recalcul, données de démonstration
 frontend/src/           pages Next.js, composants, dictionnaires FR / AR / EN
 ```
-
-## Limites connues
-
-- La collecte se lance à la main ; en production, elle tournerait sur un planificateur, avec détection des offres expirées.
-- La lecture des CV scannés (images) n'est pas gérée.
-- L'éligibilité aux dispositifs publics est indicative et doit être confirmée par un conseiller.
 
 ![Observatoire](docs/captures/observatoire.png)
