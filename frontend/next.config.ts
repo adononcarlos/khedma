@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Serveur autonome (node server.js) pour l'image Docker de déploiement
+  output: "standalone",
 };
 
 export default nextConfig;

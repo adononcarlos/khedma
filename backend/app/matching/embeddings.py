@@ -12,9 +12,12 @@ MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 @lru_cache(maxsize=1)
 def _model():
+    import os
+
     from fastembed import TextEmbedding
 
-    return TextEmbedding(MODEL, threads=4)
+    # FASTEMBED_CACHE_PATH : modèle pré-téléchargé dans l'image Docker (démarrage sans réseau)
+    return TextEmbedding(MODEL, threads=4, cache_dir=os.environ.get("FASTEMBED_CACHE_PATH"))
 
 
 def embed(texts: list[str], batch_size: int = 64) -> list[np.ndarray]:

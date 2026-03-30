@@ -1,0 +1,28 @@
+# Met à jour le site en ligne (Space Hugging Face) à chaque push sur main.
+name: Déploiement
+
+# Déclenchement manuel tant que l'hébergement n'est pas choisi (voir deploy/)
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install huggingface_hub
+      - name: Publication sur le Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          DEPLOY_MESSAGE: ${{ github.event.head_commit.message }}
+        run: python deploy/push_space.py
