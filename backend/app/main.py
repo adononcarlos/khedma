@@ -1,15 +1,18 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import account, offers, staff
+from app.config import settings
 from app.db import init_db
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    init_db()
+    if not settings.skip_init_db:  # en hébergement, le schéma est créé une fois, pas à chaque démarrage à froid
+        init_db()
     yield
 
 
@@ -23,6 +26,12 @@ app.add_middleware(
 app.include_router(offers.router)
 app.include_router(account.router)
 app.include_router(staff.router)
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    """La racine de l'API renvoie vers le site."""
+    return RedirectResponse(settings.site_url)
 
 
 @app.get("/api/health")

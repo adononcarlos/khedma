@@ -21,8 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
  && rm -rf /var/lib/apt/lists/*
 ENV PATH=/usr/lib/postgresql/17/bin:$PATH
 
-COPY backend/requirements.txt /app/backend/requirements.txt
-RUN pip install -r /app/backend/requirements.txt \
+COPY backend/requirements.txt backend/requirements-local.txt /app/backend/
+RUN pip install -r /app/backend/requirements-local.txt \
  && playwright install --with-deps --only-shell chromium \
  && python -c "from fastembed import TextEmbedding; TextEmbedding('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', cache_dir='/opt/fastembed')" \
  && chmod -R a+rX /opt/pw-browsers /opt/fastembed

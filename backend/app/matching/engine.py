@@ -13,6 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ai.cv_parser import education_level
+from app.config import settings
 from app.matching.embeddings import embed
 from app.matching.skills import SKILLS, label
 from app.models import Offer, Profile, User
@@ -40,7 +41,7 @@ def profile_text(p: Profile, lang: str = "fr") -> str:
 
 
 def refresh_profile_embedding(p: Profile) -> None:
-    p.embedding = embed([profile_text(p)])[0]
+    p.embedding = embed([profile_text(p)], task="RETRIEVAL_QUERY")[0]
 
 
 def _hard(skills: list[str] | None) -> set[str]:
@@ -48,8 +49,8 @@ def _hard(skills: list[str] | None) -> set[str]:
 
 
 def score_offer(o: Offer, p: Profile, u: User, distance: float) -> Match:
-    # Similarité cosinus utile ~[0.35, 0.80] pour ce modèle : on la ramène sur [0, 1]
-    sem = max(0.0, min(1.0, (1 - distance - 0.35) / 0.45))
+    # Similarité cosinus ramenée sur [0, 1] selon la plage utile du modèle d'embeddings (réglable)
+    sem = max(0.0, min(1.0, (1 - distance - settings.sim_low) / (settings.sim_high - settings.sim_low)))
     offer_hard, prof = _hard(o.skills), set(p.skills or [])
     matched = sorted(offer_hard & prof)
     missing = sorted(offer_hard - prof)

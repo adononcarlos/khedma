@@ -6,6 +6,7 @@ Lancer (serveurs démarrés : API sur 8010, site sur 3010) :
 Captures et vidéos : e2e/artefacts/
 """
 import json
+import os
 import re
 import subprocess
 import sys
@@ -19,13 +20,16 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / "e2e" / "artefacts"
 SHOTS = ART / "captures"
-API = "http://localhost:8010/api"
-SITE = "http://localhost:3010"
+# Cible configurable : local par défaut, ou site en ligne (E2E_SITE, E2E_API, E2E_DB_URL)
+API = os.environ.get("E2E_API", "http://localhost:8010/api")
+SITE = os.environ.get("E2E_SITE", "http://localhost:3010")
 TEST_DOMAIN = "test.khedma.ma"  # comptes créés par les tests, supprimés à la fin
 DEMO_PASSWORD = "demo12345"
 
 
 def _db_url() -> str:
+    if os.environ.get("E2E_DB_URL"):
+        return os.environ["E2E_DB_URL"]
     env = dict(l.split("=", 1) for l in (ROOT / ".env").read_text().splitlines() if "=" in l and not l.startswith("#"))
     return env["DATABASE_URL"].replace("postgresql+psycopg://", "postgresql://")
 

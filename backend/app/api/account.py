@@ -9,6 +9,7 @@ from app.ai.cv_parser import extract_text, structure_cv
 from app.ai.guard import normalize, scan
 from app.ai.provider import get_provider
 from app.api.offers import _card
+from app.config import settings
 from app.auth import create_token, current_user, hash_password, verify_password
 from app.db import get_session
 from app.matching.engine import match_offers, refresh_profile_embedding, score_offer
@@ -162,10 +163,32 @@ def offer_match(offer_id: int, lang: str | None = LANG, u: User = Depends(curren
             "missing": [label(s, lang) for s in m.missing_skills]}
 
 
+def _check_generation_quota(session: Session, u: User, offer_id: int, version: int) -> None:
+    """Garde-fou de la démo publique : nombre de générations LLM par jour (global et par utilisateur).
+    Une génération déjà en cache ne compte pas."""
+    from datetime import datetime, timezone
+
+    from sqlalchemy import func
+
+    already = session.scalar(select(func.count()).select_from(GeneratedDocument).where(
+        GeneratedDocument.user_id == u.id, GeneratedDocument.offer_id == offer_id,
+        GeneratedDocument.profile_version == version))
+    if already:
+        return
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    base = select(func.count()).select_from(GeneratedDocument).where(
+        GeneratedDocument.kind == "letter", GeneratedDocument.created_at >= today, GeneratedDocument.provider != "demo")
+    if session.scalar(base.where(GeneratedDocument.user_id == u.id)) >= settings.user_daily_generation_limit:
+        raise HTTPException(429, "Limite quotidienne de générations atteinte pour votre compte. Réessayez demain.")
+    if session.scalar(base) >= settings.daily_generation_limit:
+        raise HTTPException(429, "La démo a atteint sa limite quotidienne de générations. Réessayez demain.")
+
+
 @router.post("/me/offers/{offer_id}/documents")
 def generate_documents(offer_id: int, u: User = Depends(current_user), session: Session = Depends(get_session)):
     """Génère CV + lettre pour CETTE offre, dans SA langue. Mis en cache par version de profil."""
     p, o, m = _match_for(session, u, offer_id)
+    _check_generation_quota(session, u, o.id, p.version)
     out, cached = {}, True
     for kind in ("cv", "letter"):
         doc = session.scalar(select(GeneratedDocument).where(
@@ -203,7 +226,11 @@ def document_html(doc_id: int, u: User = Depends(current_user), session: Session
 @router.get("/me/documents/{doc_id}.pdf")
 async def document_pdf(doc_id: int, u: User = Depends(current_user), session: Session = Depends(get_session)):
     doc = _owned_doc(session, u, doc_id)
-    if doc.kind == "cv":
+    if settings.pdf_engine == "fpdf":  # hébergement sans serveur : rendu léger, sans navigateur
+        from app.ai.pdf_light import cv_pdf, letter_pdf
+
+        pdf = cv_pdf(doc.content) if doc.kind == "cv" else letter_pdf(doc.content)
+    elif doc.kind == "cv":
         pdf = await documents.cv_pdf_one_page(doc.content)
     else:
         pdf = await documents.html_to_pdf(documents.letter_html(doc.content))

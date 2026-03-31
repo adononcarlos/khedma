@@ -102,6 +102,28 @@ class MockProvider:
                 "closing": "Je vous prie d’agréer, Madame, Monsieur, l’expression de mes salutations distinguées."}, Usage()
 
 
+def vertex_credentials() -> str | None:
+    """Prépare les identifiants GCP (fichier local ou JSON en variable secrète) ; renvoie l'ID du projet."""
+    import json
+    import os
+    import tempfile
+
+    from app.config import ROOT
+
+    creds = settings.google_application_credentials
+    if settings.gcp_service_account_json and not creds:
+        # Hébergement : le JSON est fourni dans une variable d'environnement secrète (jamais dans le dépôt)
+        path = os.path.join(tempfile.gettempdir(), "gcp-sa.json")
+        if not os.path.exists(path):
+            with open(path, "w") as f:
+                f.write(settings.gcp_service_account_json)
+        creds = path
+    if creds:
+        creds = str((ROOT / creds).resolve()) if not os.path.isabs(creds) else creds
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds
+    return settings.gcp_project or (json.load(open(creds))["project_id"] if creds else None)
+
+
 class GeminiVertexProvider:
     """Gemini sur Vertex AI (GCP), région UE. Identifiants : compte de service (GOOGLE_APPLICATION_CREDENTIALS).
 
@@ -112,25 +134,9 @@ class GeminiVertexProvider:
     name = "gemini"
 
     def __init__(self):
-        import json
-        import os
-
         from google import genai
 
-        from app.config import ROOT
-
-        creds = settings.google_application_credentials
-        if settings.gcp_service_account_json and not creds:
-            # Hébergement : le JSON est fourni dans une variable d'environnement secrète (jamais dans le dépôt)
-            import tempfile
-
-            fd, creds = tempfile.mkstemp(suffix=".json")
-            with os.fdopen(fd, "w") as f:
-                f.write(settings.gcp_service_account_json)
-        if creds:
-            creds = str((ROOT / creds).resolve()) if not os.path.isabs(creds) else creds
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds
-        project = settings.gcp_project or (json.load(open(creds))["project_id"] if creds else None)
+        project = vertex_credentials()
         self.client = genai.Client(vertexai=True, project=project, location=settings.gcp_location)
         self.model = settings.llm_model
 

@@ -1,9 +1,12 @@
 from sqlalchemy import create_engine, text
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.config import settings
 
-engine = create_engine(settings.database_url, pool_pre_ping=True)
+# Sans serveur : une connexion par requête (le pooler de Neon mutualise côté base)
+engine = (create_engine(settings.database_url, poolclass=NullPool) if settings.serverless
+          else create_engine(settings.database_url, pool_pre_ping=True))
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
 

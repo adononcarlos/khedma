@@ -17,6 +17,22 @@ class Settings(BaseSettings):
     gcp_project: str = ""
     gcp_location: str = "eu"
     llm_model: str = "gemini-3.8-flash"
+    # Embeddings : "local" (modèle ONNX embarqué) ou "vertex" (API, pour l'hébergement sans serveur)
+    embedding_provider: str = "local"
+    embedding_model: str = "text-multilingual-embedding-002"
+    embedding_location: str = "europe-west1"
+    # Plage utile de similarité cosinus du modèle d'embeddings, ramenée sur [0, 1] pour le score
+    sim_low: float = 0.35
+    sim_high: float = 0.80
+    # PDF : "chromium" (rendu HTML exact) ou "fpdf" (léger, sans navigateur)
+    pdf_engine: str = "chromium"
+    # Hébergement sans serveur (Vercel) : pas de pool de connexions, pas d'init de schéma au démarrage
+    site_url: str = "https://khedma-maroc.vercel.app"
+    serverless: bool = False
+    skip_init_db: bool = False
+    # Garde-fous de la démo publique (générations LLM par jour)
+    daily_generation_limit: int = 300
+    user_daily_generation_limit: int = 15
     firecrawl_api_key: str = ""
     # Politesse du crawl : délai minimal entre deux requêtes vers une même source
     crawl_delay_s: float = 0.5

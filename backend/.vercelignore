@@ -1,0 +1,7 @@
+tests/
+scripts/
+__pycache__/
+*.pyc
+requirements-local.txt
+.env*
+.vercel/

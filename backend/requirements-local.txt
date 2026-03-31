@@ -1,0 +1,8 @@
+# Local et Docker : API + modèle d'embeddings local, rendu PDF Chromium, collecte, tests
+-r requirements.txt
+uvicorn==0.54.0
+fastembed==0.8.1
+playwright==1.63.0
+pytest==9.1.1
+pytest-playwright==0.9.0
+RapidFuzz==3.14.6

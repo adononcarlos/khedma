@@ -22,3 +22,9 @@ secrets/
 
 # Captures, vidéos et fichiers générés par les tests e2e
 e2e/artefacts/
+
+# Livrables locaux (PDF, captures, vidéo de démo) : hors dépôt
+/captures khedma/
+/Khedma_presentation.pdf
+/Realisations.pdf
+/Khedma_demo.mp4
