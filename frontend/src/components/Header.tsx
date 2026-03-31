@@ -7,6 +7,7 @@ import type { Dict, Locale } from "@/i18n/dictionaries";
 export function Header({ lang, t }: { lang: Locale; t: Dict }) {
   const links = [
     { href: `/${lang}/offres`, label: t.nav.offers },
+    { href: `/${lang}/avis`, label: t.nav.reviews },
     { href: `/${lang}/espace`, label: t.nav.space },
     { href: `/${lang}/conseiller`, label: t.nav.counselor },
     { href: `/${lang}/observatoire`, label: t.nav.observatory },

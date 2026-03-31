@@ -35,6 +35,8 @@ def test_observatory(page, console_errors, api, scheme):
     tile = page.get_by_text("Offres actives", exact=True).locator("..")
     assert count_from_text(tile.inner_text()) == total
     expect(page.get_by_text("Tension par métier")).to_be_visible()
+    expect(page.get_by_text("Satisfaction des utilisateurs")).to_be_visible()
+    expect(page.get_by_text("4,8 / 5")).to_be_visible()
     page.get_by_text("Voir les données").first.click()
     expect(page.locator("details[open] table")).to_be_visible()
     page.locator("main li[tabindex='0']").first.focus()  # infobulle au clavier

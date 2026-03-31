@@ -95,3 +95,40 @@ body {
 [dir="rtl"] body {
   font-family: var(--font-arabic), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
+
+/* Bandeau d'avis de la page d'accueil : défilement continu, pause au survol ou au focus,
+   immobile (et défilable à la main) si l'utilisateur limite les animations. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.marquee {
+  mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+}
+
+.marquee-track {
+  animation: marquee 120s linear infinite;
+}
+
+.marquee-reverse {
+  animation-direction: reverse;
+}
+
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    overflow-x: auto;
+    mask-image: none;
+  }
+  .marquee-track {
+    animation: none;
+  }
+  .marquee-track > [aria-hidden="true"] {
+    display: none;
+  }
+}

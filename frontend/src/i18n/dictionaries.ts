@@ -9,7 +9,20 @@ export const dirOf = (l: Locale) => (l === "ar" ? "rtl" : "ltr");
 const fr = {
   brand: "Khedma",
   tagline: "Toutes les offres d'emploi du Maroc, au même endroit.",
-  nav: { offers: "Offres", space: "Mon espace", counselor: "Espace conseiller", observatory: "Observatoire" },
+  nav: { offers: "Offres", space: "Mon espace", counselor: "Espace conseiller", observatory: "Observatoire", reviews: "Avis" },
+  reviews: {
+    homeTitle: "Ce qu'en disent nos utilisateurs",
+    homeSub: "Candidats, étudiants internationaux et conseillers partagent leur expérience.",
+    seeAll: "Voir tous les avis",
+    title: "Avis des utilisateurs",
+    sub: "Ce que candidats, étudiants internationaux, conseillers et recruteurs disent de Khedma.",
+    average: "Note moyenne", count: "Avis", countShort: "avis", fiveStars: "donnent 5 étoiles", breakdown: "Répartition des notes",
+    profile: "Profil", language: "Langue", allLanguages: "Toutes les langues",
+    profiles: { all: "Tous", seeker: "Candidats", student: "Étudiants internationaux", pro: "Conseillers et recruteurs" } as Record<string, string>,
+    empty: "Aucun avis ne correspond à ces critères.",
+    stars: (n: number) => `${n} étoile${n > 1 ? "s" : ""} sur 5`,
+    satisfaction: "Satisfaction des utilisateurs", satisfactionSub: (n: number) => `${n} avis · note moyenne sur 5`,
+  },
   home: {
     title: "Trouvez l'emploi qui vous correspond",
     subtitle:
@@ -144,7 +157,20 @@ type Dict = typeof fr;
 const ar: Dict = {
   brand: "خدمة",
   tagline: "جميع عروض الشغل بالمغرب في مكان واحد.",
-  nav: { offers: "العروض", space: "فضائي", counselor: "فضاء المستشار", observatory: "المرصد" },
+  nav: { offers: "العروض", space: "فضائي", counselor: "فضاء المستشار", observatory: "المرصد", reviews: "الآراء" },
+  reviews: {
+    homeTitle: "ماذا يقول مستخدمونا",
+    homeSub: "باحثون عن عمل وطلبة دوليون ومستشارون يشاركون تجربتهم.",
+    seeAll: "عرض كل الآراء",
+    title: "آراء المستخدمين",
+    sub: "ما يقوله الباحثون عن عمل والطلبة الدوليون والمستشارون والمشغلون عن خدمة.",
+    average: "المعدل العام", count: "عدد الآراء", countShort: "رأياً", fiveStars: "منحوا 5 نجوم", breakdown: "توزيع التقييمات",
+    profile: "الفئة", language: "اللغة", allLanguages: "كل اللغات",
+    profiles: { all: "الكل", seeker: "الباحثون عن عمل", student: "الطلبة الدوليون", pro: "المستشارون والمشغلون" } as Record<string, string>,
+    empty: "لا توجد آراء تطابق هذه المعايير.",
+    stars: (n: number) => `${n} من 5 نجوم`,
+    satisfaction: "رضا المستخدمين", satisfactionSub: (n: number) => `${n} رأياً · المعدل من 5`,
+  },
   home: {
     title: "اعثر على الشغل المناسب لك",
     subtitle: "نجمع عروض أنابيك وإنديد ومواقع أخرى، ثم يقترح عليك الذكاء الاصطناعي العروض الملائمة لملفك.",
@@ -284,7 +310,20 @@ const ar: Dict = {
 const en: Dict = {
   brand: "Khedma",
   tagline: "Every job offer in Morocco, in one place.",
-  nav: { offers: "Jobs", space: "My space", counselor: "Counselor", observatory: "Observatory" },
+  nav: { offers: "Jobs", space: "My space", counselor: "Counselor", observatory: "Observatory", reviews: "Reviews" },
+  reviews: {
+    homeTitle: "What our users say",
+    homeSub: "Job seekers, international students and counselors share their experience.",
+    seeAll: "See all reviews",
+    title: "User reviews",
+    sub: "What job seekers, international students, counselors and recruiters say about Khedma.",
+    average: "Average rating", count: "Reviews", countShort: "reviews", fiveStars: "give 5 stars", breakdown: "Rating breakdown",
+    profile: "Profile", language: "Language", allLanguages: "All languages",
+    profiles: { all: "All", seeker: "Job seekers", student: "International students", pro: "Counselors and recruiters" } as Record<string, string>,
+    empty: "No reviews match these filters.",
+    stars: (n: number) => `${n} out of 5 stars`,
+    satisfaction: "User satisfaction", satisfactionSub: (n: number) => `${n} reviews · average out of 5`,
+  },
   home: {
     title: "Find the job that fits you",
     subtitle: "We gather offers from ANAPEC, Indeed and other sites, then AI surfaces the ones that match your profile.",

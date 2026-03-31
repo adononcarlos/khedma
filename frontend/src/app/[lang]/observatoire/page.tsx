@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { BarList, Columns, StatTile } from "@/components/Charts";
 import { Restricted } from "@/components/Restricted";
+import { reviewStats } from "@/data/reviews";
 import { getDictionary, hasLocale } from "@/i18n/dictionaries";
 import { authFetch, getMe } from "@/lib/session";
 
@@ -29,6 +31,7 @@ export default async function ObservatoryPage({ params }: PageProps<"/[lang]/obs
   const loc = lang === "ar" ? "ar-MA" : lang === "en" ? "en-GB" : "fr-FR";
   const monthLabel = (m: string) => new Date(`${m}-01`).toLocaleDateString(loc, { month: "short", year: "2-digit" });
   const ghosts = (d.users.status.ghost ?? 0) + (d.users.status.duplicate ?? 0);
+  const rs = reviewStats();
   const pct = (n: number) => `${((100 * n) / Math.max(1, d.users.registered)).toFixed(1).replace(".", lang === "en" ? "." : ",")} %`;
 
   return (
@@ -42,9 +45,11 @@ export default async function ObservatoryPage({ params }: PageProps<"/[lang]/obs
         <StatTile label={s.ghosts} value={ghosts.toLocaleString(loc)} sub={pct(ghosts)} />
         <StatTile label={s.employed} value={d.users.employed.toLocaleString(loc)} sub={pct(d.users.employed)} />
       </div>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <a href={d.hcp.source} target="_blank" rel="noopener noreferrer" className="block"><StatTile label={s.unemployment(d.hcp.period)} value={`${d.hcp.unemployment} %`} sub={`${d.hcp.urban} % urbain · ${d.hcp.rural} % rural ↗`} /></a>
         <StatTile label={s.youth} value={`${d.hcp.youth_15_24} %`} sub={`HCP, ${d.hcp.period}`} />
+        <Link href={`/${lang}/avis`} className="block"><StatTile label={t.reviews.satisfaction}
+          value={`${rs.avg.toLocaleString(loc, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} / 5`} sub={`${t.reviews.satisfactionSub(rs.n)} ${lang === "ar" ? "←" : "→"}`} /></Link>
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
